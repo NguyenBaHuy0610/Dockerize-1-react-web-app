@@ -1,33 +1,30 @@
-# Dockerize React + API + PostgreSQL
+# Hướng dẫn cho dev01 và dev02 khi lấy mã nguồn
 
-Cấu trúc ban đầu của dự án gồm API server (Node.js/restify), frontend React và database PostgreSQL, chạy bằng Docker Compose.
+## 1. Tạo file .env
+Liên hệ leader để lấy giá trị cho file `.env` (tham khảo `.env.sample`):
 
-## Cấu trúc thư mục
+```bash
+cp .env.sample .env
+```
 
-| Tên | Ý nghĩa |
-|---|---|
-| `api-server/` | Mã nguồn API Server |
-| `frontend-react/` | Mã nguồn React |
-| `.env` | Biến môi trường (không đưa lên git) |
-| `.env.sample` | Mẫu biến môi trường (đưa lên git) |
-| `.gitignore` | Các thư mục/tập tin bị bỏ qua khi push |
-| `Dockerfile` | Thông tin để tạo image |
-| `docker-compose.yml` | Khai báo nhiều container liên quan nhau |
+## 2. Build các container lần đầu
+```bash
+docker compose up -d --build
+```
 
-## Thiết lập
+Kết nối tới container `api_1` để chạy migration và seeding lần đầu:
 
-1. Sao chép `.env.sample` thành `.env` và điền giá trị.
-2. Tạo API: `cd api-server && npm init -y && npm install --save restify pg knex && npm install --save-dev nodemon`, sau đó tạo `index.js` và `knexfile.js`.
-3. Tạo React: `npx create-react-app frontend-react`, sau đó xóa thư mục `node_modules` bên trong.
-4. Chạy tất cả: `docker compose up --build`
+```bash
+docker exec -it api_1 /bin/bash
+knex migrate:latest
+knex seed:run
+exit
+```
 
-## Cổng
+## 3. Khi thêm một package vào package.json
+1. Sau khi chạy `npm install --save TenPackage`, xóa thư mục `node_modules` vừa được tạo ra.
+2. Build lại container tương ứng:
 
-- API: http://localhost:8080
-- Frontend: http://localhost:3000
-- PostgreSQL: localhost:5432
-
-## Lưu ý
-
-- Mỗi khi thêm thư viện vào `package.json`: xóa `node_modules` trên máy rồi `docker compose up --build`.
-- Dev dùng `nodemon`, triển khai thật dùng `pm2` và không mount volume mã nguồn.
+```bash
+docker compose up -d --build frontend   # hoặc: api
+```
